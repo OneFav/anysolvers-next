@@ -1,3 +1,4 @@
+import {tmpdir} from 'node:os'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {Context} from '@deepseek-ai/cordis'
@@ -10,7 +11,7 @@ import {artifactIdentity} from '@onefav/research-runtime'
 import {execFileSync} from 'node:child_process'
 const python=execFileSync('python3',['-c','import sys; print(sys.executable)'],{encoding:'utf8'}).trim()
 test('independent dynamic plugin uses real Loader presets and shared runtime with no AnySolvers dependency',async t=>{
- const root=await realpath(await mkdtemp('/private/tmp/as-dynamic-')),project=join(root,'project');await mkdir(join(project,'configs'),{recursive:true});await writeFile(join(project,'configs/dynamic-fixture.json'),JSON.stringify({format:'dynamic-fixture-v1',testOnly:true,studyId:'same',values:[1,2]}))
+ const root=await realpath(await mkdtemp(join(tmpdir(),'as-dynamic-'))),project=join(root,'project');await mkdir(join(project,'configs'),{recursive:true});await writeFile(join(project,'configs/dynamic-fixture.json'),JSON.stringify({format:'dynamic-fixture-v1',testOnly:true,studyId:'same',values:[1,2]}))
  const before=await artifactIdentity(new URL('../packages/research-runtime/',import.meta.url).pathname)
  const baseUrl=new URL('../',import.meta.url).href,ctx=new Context().extend({baseUrl}),loader=ctx.plugin(Loader,{baseUrl});await loader
  const adapter=loopAdapter();let loopFiber

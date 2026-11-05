@@ -37,6 +37,7 @@ def init(instance, args):
         raise ValueError('Instance already configured; inspect/edit its configuration instead of overwriting it')
     cfg = json.loads((ROOT / 'config/settings.example.json').read_text())
     mode = args.mode
+    if os.name=='nt' and mode!='control':raise ValueError('Native Windows supports control mode; run research hosts in WSL2, Linux or macOS')
     url = args.router_url or 'http://127.0.0.1:' + str(args.port)
     if mode == 'host' and not args.router_url: raise ValueError('Host mode requires --router-url')
     from urllib.parse import urlsplit
@@ -103,6 +104,10 @@ def seal(config):
     env = dict(os.environ, PATH=str(Path(py).parent)+os.pathsep+os.environ.get('PATH',''))
     commands = [[*npm_command(),'test'],[*npm_command(),'run','test:runtime'],
         [py,'-B','-m','unittest','discover','-s','tests/controlplane','-v']]
+    if os.name=='nt':
+        commands=[[*npm_command(),'run','test:control-portable'],
+            [py,'-B','-m','unittest','discover','-s','tests/controlplane','-p','test_agent_deployment.py','-v'],
+            [py,'-B','-m','unittest','discover','-s','tests/controlplane','-p','test_feishu_deployment.py','-v']]
     evidence = []
     before = content_digest(ROOT)
     cfg['default_version'] += '-'+before[:12]

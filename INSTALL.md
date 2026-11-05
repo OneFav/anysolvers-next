@@ -14,7 +14,7 @@ python3 scripts/deploy.py init --instance ../anysolvers-instance --port 8787 --p
 python3 scripts/deploy.py install --instance ../anysolvers-instance
 ```
 
-Windows 将 `python3` 换为 `python`。`deepseek-account` 需先在目标机器 DSH 登录；API provider 使用对应进程环境变量和原生 DSH 配置。不要复制、读取或输出认证文件。已有 DSH profile 不会被导入或修改。
+Windows 将 `python3` 换为 `python`，并在 `init` 时添加 `--mode control`；原生 Windows 拒绝研究 Host/单机模式，研究使用 WSL2 或其他执行机。`deepseek-account` 需先在目标机器 DSH 登录；API provider 使用对应进程环境变量和原生 DSH 配置。不要复制、读取或输出认证文件。已有 DSH profile 不会被导入或修改。
 
 程序源目录与实例目录必须分开。实例目录保存 `config/settings.json`、`.state`、`.venv`、`versions`、`projects`；可用 `--projects` 选择独立研究目录。相对 CLI 参数按调用位置解析，配置中的相对路径按配置目录的 `path_base` 解析。带空格/中文的参数应加引号。
 

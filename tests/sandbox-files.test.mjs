@@ -73,7 +73,7 @@ test('relative workspace storage stays under its project without path-based name
 })
 
 test('trusted external workspace roots remain isolated by project and reject links', async t => {
-  const base = await mkdtemp('/private/tmp/anysolvers-storage-')
+  const base = await realpath(await mkdtemp(join(tmpdir(),'anysolvers-storage-')))
   const first = await fixture(t), second = await fixture(t)
   const previous = process.env.ANYSOLVERS_DSH_WORKSPACES
   process.env.ANYSOLVERS_DSH_WORKSPACES = base
@@ -130,7 +130,7 @@ test('Docker workspaces use a fixed file-only command and reject unknown or stop
 })
 
 test('explicit desktop workspace configuration works without a shell export', async t => {
-  const base = await mkdtemp('/private/tmp/anysolvers-desktop-storage-')
+  const base = await realpath(await mkdtemp(join(tmpdir(),'anysolvers-desktop-storage-')))
   const root = await fixture(t)
   t.after(() => rm(base, { recursive: true, force: true }))
   const work = await prepareWorkspace(root, 'study/001', 'r1-r001', base)

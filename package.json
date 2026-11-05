@@ -63,7 +63,7 @@
     }
   },
   "scripts": {
-    "build": "npm run build -w @onefav/research-runtime && tsc -p tsconfig.json && node scripts/build-client.mjs && node scripts/build-runtime.mjs && node scripts/build-implementation.mjs",
+    "build": "npm run build -w @onefav/research-runtime && npm run build -w @onefav/dynamic-research-fixture && tsc -p tsconfig.json && node scripts/build-client.mjs && node scripts/build-runtime.mjs && node scripts/build-implementation.mjs",
     "test": "node --test tests/*.test.mjs",
     "check": "npm run build && npm test",
     "test:runtime": "node --test packages/research-runtime/tests/*.test.mjs && python3 -B -m unittest discover -s packages/research-runtime/tests -p \"test_*.py\"",
@@ -71,7 +71,8 @@
     "test:controlplane": "python3 -B -m unittest discover -s tests/controlplane -v",
     "test:native": "python3 -B tests/native-smoke.py",
     "test:observer-native": "python3 -B tests/native-observer-smoke.py",
-    "release:plugin": "npm run build && node scripts/package-plugin.mjs"
+    "release:plugin": "npm run build && node scripts/package-plugin.mjs",
+    "test:control-portable": "node --test tests/communication.test.mjs tests/desktop-ui.test.mjs tests/next-durable.test.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.5",

@@ -20,7 +20,7 @@ deploy=importlib.util.module_from_spec(spec);spec.loader.exec_module(deploy)
 
 class AgentDeployment(unittest.TestCase):
     def args(self,**changes):
-        return Namespace(**dict(dict(mode='standalone',port=8797,router_url=None,projects=None,provider='fixture',model='fixture',dsh_credentials_home=None),**changes))
+        return Namespace(**dict(dict(mode='control' if os.name=='nt' else 'standalone',port=8797,router_url=None,projects=None,provider='fixture',model='fixture',dsh_credentials_home=None),**changes))
     def test_init_keeps_separate_state_and_does_not_overwrite(self):
         with tempfile.TemporaryDirectory(prefix='部署 space ') as temp:
             instance=Path(temp).resolve()/'instance'
@@ -36,7 +36,7 @@ class AgentDeployment(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             for url in [None,'http://remote.example:8787','https://user:password@example.com']:
                 with self.assertRaises(ValueError):deploy.init(Path(temp).resolve(),self.args(mode='host',router_url=url))
-            deploy.init(Path(temp).resolve(),self.args(mode='host',router_url='https://router.example.com'))
+            if os.name!='nt':deploy.init(Path(temp).resolve(),self.args(mode='host',router_url='https://router.example.com'))
     def test_history_mode_does_not_start_consumer(self):
         import threading
         class Fixture(Feishu):
