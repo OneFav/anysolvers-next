@@ -46,6 +46,25 @@ class AgentDeployment(unittest.TestCase):
             def consume(self,*args):raise AssertionError('Extra stream')
         stop=threading.Event();stop.set()
         Fixture(None,dict(receive_mode='history')).serve(stop)
+    def test_duplicate_chat_receiver_is_blocked_and_lease_released(self):
+        import threading, uuid
+        entered=threading.Event();stop=threading.Event();health=[];calls=[]
+        class Fixture(Feishu):
+            def maintenance(self,event):calls.append(self);entered.set();event.wait()
+            def health(self,*args):health.append(args)
+        cfg=dict(app_id='fixture-'+uuid.uuid4().hex,chats=[dict(chat_id='oc_fixture')],receive_mode='history')
+        first=Fixture(None,cfg);thread=threading.Thread(target=first.serve,args=(stop,));thread.start()
+        try:
+            self.assertTrue(entered.wait(3))
+            stopped=threading.Event();stopped.set()
+            Fixture(None,cfg).serve(stopped)
+            self.assertEqual(len(calls),1)
+            self.assertTrue(any(h[1]=='blocked' for h in health))
+        finally:stop.set();thread.join(3)
+        self.assertFalse(thread.is_alive())
+        Fixture(None,cfg).serve(stopped)
+        self.assertEqual(len(calls),2)
+
     def test_stale_status_is_stopped(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp).resolve();deploy.init(root,self.args())

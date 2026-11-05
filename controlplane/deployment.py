@@ -40,6 +40,8 @@ def service(action, config):
             time.sleep(.2)
         raise ValueError('Stop is pending; inspect status before starting another instance')
     if live(status):return service('status',config)
+    if not cfg['worker_host'].get('versions',{}).get(cfg['default_version']):
+        raise ValueError('Seal and register the selected version before starting services')
     # Lock startup as well as supervision: concurrent agents must not create two supervisors.
     with host_lock(root/'start.lock'):
         if live(read(root/'status.json')):return service('status',config)
@@ -102,7 +104,7 @@ def supervise(config):
         finally:
             for child in reversed(list(children.values())):
                 if child.poll() is None:
-                    if os.name=='nt':child.terminate()
+                    if os.name=='nt':subprocess.run(['taskkill','/PID',str(child.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
                     else:os.killpg(child.pid,signal.SIGTERM)
             for child in children.values():
                 try:child.wait(timeout=8)

@@ -291,21 +291,26 @@ class Feishu:
         if not stop.is_set():raise ValueError('Feishu event consumer disconnected')
 
     def serve(self, stop):
-        if self.config.get('receive_mode','stream')=='history':
-            self.health('stream','disabled','历史轮询模式；不创建额外长连接')
-            self.maintenance(stop);return
-        # Same-app instances on this machine share a lease for both stream and
-        # backfill/outbox. Cross-machine deployments need an explicit sole receiver.
+        # Local leases prevent two managed instances from dispatching the same
+        # group. Across machines designate one owner per group explicitly.
         import tempfile, hashlib
+        from contextlib import ExitStack
         from .processes import host_lock
         scope=str(Path.home())+'\0'+self.config.get('app_id',str(self.config.get('cli_config_dir','')))
-        lock=Path(tempfile.gettempdir())/('anysolvers-feishu-'+hashlib.sha256(scope.encode()).hexdigest()+'.lock')
+        def lease(kind):
+            return Path(tempfile.gettempdir())/('anysolvers-feishu-'+hashlib.sha256((scope+'\0'+kind).encode()).hexdigest()+'.lock')
         try:
-            with host_lock(lock):
-                thread=threading.Thread(target=self.maintenance,args=(stop,),daemon=True);thread.start()
+            with ExitStack() as stack:
+                for chat in sorted(self.config.get('chats',[]),key=lambda c:c['chat_id']):
+                    stack.enter_context(host_lock(lease('chat:'+chat['chat_id'])))
+                if self.config.get('receive_mode','stream')=='history':
+                    self.health('stream','disabled','历史轮询模式；不创建额外长连接')
+                    self.maintenance(stop);return
+                stack.enter_context(host_lock(lease('stream')))
+                threading.Thread(target=self.maintenance,args=(stop,),daemon=True).start()
                 self.stream(stop)
         except (OSError,RuntimeError):
-            self.health('stream','blocked','同一应用已有本机接收器；请停用旧实例或使用独立群的历史轮询模式')
+            self.health('stream','blocked','本机已有接收器或此群已有实例；请核对群归属后停用重复实例')
             stop.wait()
 
     def maintenance(self, stop):

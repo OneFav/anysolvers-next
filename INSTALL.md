@@ -34,7 +34,7 @@ Windows 将 `python3` 换为 `python`，并在 `init` 时添加 `--mode control`
 
 ```sh
 python3 scripts/feishu-setup.py create-chat --config ../anysolvers-instance/config/settings.json --name 'AnySolvers 验收' --request-id install-test-001 --user-id ou_YOUR_OPEN_ID
-python3 scripts/feishu-setup.py configure --config ../anysolvers-instance/config/settings.json --chat-id oc_CREATED_CHAT --user-id ou_YOUR_OPEN_ID --label 'AnySolvers 验收'
+python3 scripts/feishu-setup.py configure --config ../anysolvers-instance/config/settings.json --chat-id oc_CREATED_CHAT --user-id ou_YOUR_OPEN_ID --label 'AnySolvers 验收' --test-group
 python3 scripts/feishu-setup.py check --config ../anysolvers-instance/config/settings.json
 python3 scripts/feishu-setup.py enable --config ../anysolvers-instance/config/settings.json
 ```
@@ -72,12 +72,12 @@ github:OneFav/anysolvers-next#plugin-v0.8.0
 等价命令（使用所选 DSH 安装的 CLI，不要求全局安装）：
 
 ```sh
-dsh plugin --profile /path/to/NEW/profile add github:OneFav/anysolvers-next#plugin-v0.8.0
+DSH_HOME=/path/to/NEW/dsh-home dsh plugin --profile web add github:OneFav/anysolvers-next#plugin-v0.8.0
 ```
 
 插件发布标签包含预构建的完整 UI bundle，无安装期构建钩子。后台仍按上述 agent 协议安装，插件与 CLI 共用同一实例。给插件 `anysolvers-im-ui` 配置 `instance: /absolute/path/to/anysolvers-instance`，或启动 DSH 前设置 `ANYSOLVERS_INSTANCE`。插件显示绑定群、健康、研究进度并允许 owner 启停服务；首次安装/升级和认证继续交给安装 agent。
 
-本地开发安装只允许指定新的专用 profile；不得修改源项目使用的已安装 profile。
+当前固定 DSH 版本的 CLI 只接受 profile 名称；desktop 名称由 Electron 管理。CLI 验收使用独立 DSH_HOME 下的 web profile；桌面内使用插件页面的 GitHub 链接输入。不得修改源项目使用的已安装 profile。
 
 ## 5. 跨机器部署
 

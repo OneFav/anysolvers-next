@@ -103,6 +103,25 @@ class RemoteCase(unittest.TestCase):
         compute['remote']['root']='~/deploy with spaces/versions/fixed'
         self.assertEqual(remote.shell_command(compute,'preflight'),command)
 
+    def test_remote_schema_accepts_transport_paths_in_every_config_form(self):
+        import jsonschema
+        schemas=json.loads((ROOT/'runtime/tools/schemas.json').read_text())
+        found=[]
+        def visit(value):
+            if isinstance(value,dict):
+                props=value.get('properties',{})
+                if set(props)=={'host','root','python'}:found.append(value)
+                for child in value.values():visit(child)
+            elif isinstance(value,list):
+                for child in value:visit(child)
+        visit(schemas);self.assertEqual(len(found),5)
+        for schema in found:
+            for path in ('deploy/versions/fixed','~/deploy with spaces/fixed','/root/deploy/fixed'):
+                jsonschema.validate(dict(host='compute-node',root=path,python='miniconda3/bin/python3'),schema)
+            for bad in ('../escape','/root/../escape','~/../escape','-x','a;echo bad','$(secret)'):
+                with self.assertRaises(jsonschema.ValidationError):
+                    jsonschema.validate(dict(host='compute-node',root=bad,python='python3'),schema)
+
     def test_archive_bytes_and_members_fail_closed(self):
         expected={'solver.py':b'one','entrypoint.py':b'two'}
         def archive(items):

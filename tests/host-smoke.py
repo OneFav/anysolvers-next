@@ -45,7 +45,7 @@ def main():
                 assert result['resumed']==(generation==2)
                 assert result['model_called'] is False
                 assert result['initialization_tool_executed'] is True
-                assert read(manifest)['python']==str(Path(sys.executable).absolute()),'Host escaped the selected Python environment'
+                assert read(manifest)['python']==os.path.abspath(sys.executable),'Host escaped the selected Python environment'
                 if previous:assert result['native_id']==previous
                 previous=result['native_id'];proof.append(dict(generation=generation,native_id=previous,resumed=result['resumed']))
             assert engine.store.get('jobs',job_id)['generation']==2

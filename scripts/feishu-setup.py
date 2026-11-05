@@ -43,7 +43,7 @@ def main():
     p.add_argument('action',choices=['prepare','new-app','existing-app','check','chats','members','configure','create-chat','enable','disable','send-test'])
     p.add_argument('--config',default=str(ROOT/'config/settings.json'))
     p.add_argument('--chat-id');p.add_argument('--user-id',action='append',default=[])
-    p.add_argument('--name',default='AnySolvers 部署验收');p.add_argument('--request-id',help='Stable ID for idempotent group creation');p.add_argument('--reuse-auth-config',help='Explicitly reuse an existing deployment CLI authentication without copying secrets');p.add_argument('--receive-mode',choices=['stream','history'],default='stream');
+    p.add_argument('--test-group',action='store_true',help='Explicitly designate this chat for live acceptance tests');p.add_argument('--name',default='AnySolvers 部署验收');p.add_argument('--request-id',help='Stable ID for idempotent group creation');p.add_argument('--reuse-auth-config',help='Explicitly reuse an existing deployment CLI authentication without copying secrets');p.add_argument('--receive-mode',choices=['stream','history'],default='stream');
     p.add_argument('--notify-user');p.add_argument('--label',default='AnySolvers 测试群')
     p.add_argument('--reply-to',help='测试群内一条真实消息的 om_ ID，仅 send-test 使用')
     args=p.parse_args();path=Path(args.config).resolve()
@@ -143,12 +143,12 @@ def main():
         adapter.call(['api','GET','/open-apis/im/v1/chats/'+args.chat_id])
         def update(c):
             c['feishu'].update({k:identity[k] for k in ('app_id','bot_id')})
-            chats=c['feishu']['chats'];new=dict(chat_id=args.chat_id,label=args.label,allowed_users=args.user_id,notify_user=args.notify_user or '',test_group=True)
+            chats=c['feishu']['chats'];new=dict(chat_id=args.chat_id,label=args.label,allowed_users=args.user_id,notify_user=args.notify_user or '',test_group=args.test_group)
             c['feishu']['chats']=[v for v in chats if v.get('chat_id') and v['chat_id']!=args.chat_id]+[new]
         save(path,update);print('已写入指定测试群与派工者；尚未启用自动派工。');return
     # This command is explicit. Checks the real reply target belongs to the designated group.
     chat=next((c for c in f.get('chats',[]) if c['chat_id']==args.chat_id),None)
-    if not chat or not args.reply_to or not re.fullmatch(r'om_[A-Za-z0-9_-]+',args.reply_to):raise ValueError('send-test 需要已配置的测试群和 --reply-to om_…')
+    if not chat or not chat.get('test_group') or not args.reply_to or not re.fullmatch(r'om_[A-Za-z0-9_-]+',args.reply_to):raise ValueError('send-test 需要已配置的测试群和 --reply-to om_…')
     result=adapter.call(['api','GET','/open-apis/im/v1/messages/'+args.reply_to])
     messages=result.get('items',[])
     if len(messages)!=1 or messages[0].get('chat_id')!=args.chat_id:raise ValueError('回复目标不属于指定测试群')

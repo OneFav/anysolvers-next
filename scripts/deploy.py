@@ -61,6 +61,8 @@ def init(instance, args):
     return dict(config=str(path), mode=mode, next='install', research_started=False)
 
 def install(instance, config):
+    from controlplane.deployment import service
+    if service('status',config)['running']:raise ValueError('Stop the instance before installing or upgrading dependencies')
     if sys.version_info < (3,10): raise ValueError('Python >=3.10 required (3.12 recommended)')
     version = subprocess.check_output(['node','--version'], text=True).strip().lstrip('v').split('.')
     if tuple(map(int,version[:2])) < (22,19): raise ValueError('Node >=22.19 required')
@@ -83,7 +85,11 @@ def inspect(config):
         dsh=Path(cfg['router_agent']['dsh_command'][1]).is_file(),
         feishu_cli=Path(cfg['feishu']['cli_command'][0]).is_file())
     versions = cfg['worker_host']['versions']
-    checks['sealed_version'] = cfg['default_version'] in versions and local_path(cfg, versions.get(cfg['default_version'],'.')) .is_dir()
+    from controlplane.versions import content_digest
+    from controlplane.store import Store
+    selected=versions.get(cfg['default_version'])
+    record=Store(local_path(cfg,cfg['state_db'])).get('versions',cfg['default_version']) if local_path(cfg,cfg['state_db']).exists() else None
+    checks['sealed_version'] = bool(selected and record and local_path(cfg,selected).is_dir() and content_digest(local_path(cfg,selected))==record['digest'])
     return dict(config=str(config), mode=cfg.get('deployment',{}).get('mode','standalone'),
         ready=all(checks.values()), checks=checks, feishu_enabled=cfg['feishu']['enabled'],
         configured_chats=len(cfg['feishu']['chats']), credentials_inspected=False,
@@ -109,6 +115,7 @@ def seal(config):
             [py,'-B','-m','unittest','discover','-s','tests/controlplane','-p','test_agent_deployment.py','-v'],
             [py,'-B','-m','unittest','discover','-s','tests/controlplane','-p','test_feishu_deployment.py','-v']]
     evidence = []
+    run([*npm_command(),'run','build'],env=env)
     before = content_digest(ROOT)
     cfg['default_version'] += '-'+before[:12]
     for command in commands:
