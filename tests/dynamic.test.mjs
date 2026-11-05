@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url'
 import {tmpdir} from 'node:os'
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -12,7 +13,7 @@ import {execFileSync} from 'node:child_process'
 const python=execFileSync('python3',['-c','import sys; print(sys.executable)'],{encoding:'utf8'}).trim()
 test('independent dynamic plugin uses real Loader presets and shared runtime with no AnySolvers dependency',async t=>{
  const root=await realpath(await mkdtemp(join(tmpdir(),'as-dynamic-'))),project=join(root,'project');await mkdir(join(project,'configs'),{recursive:true});await writeFile(join(project,'configs/dynamic-fixture.json'),JSON.stringify({format:'dynamic-fixture-v1',testOnly:true,studyId:'same',values:[1,2]}))
- const before=await artifactIdentity(new URL('../packages/research-runtime/',import.meta.url).pathname)
+ const before=await artifactIdentity(fileURLToPath(new URL('../packages/research-runtime/',import.meta.url)))
  const baseUrl=new URL('../',import.meta.url).href,ctx=new Context().extend({baseUrl}),loader=ctx.plugin(Loader,{baseUrl});await loader
  const adapter=loopAdapter();let loopFiber
  t.after(async()=>{for(const handle of adapter.handles)await handle.dispose();await loopFiber?.dispose();await loader.dispose();await rm(root,{recursive:true,force:true})})
@@ -43,7 +44,7 @@ test('independent dynamic plugin uses real Loader presets and shared runtime wit
  const binding=await ctx.researchRuntime.projects.binding(handle.agent.id);assert.equal(binding.implementationId,'dynamic-fixture')
  await ctx.loader.remove('dynamic');await ctx.loader.await();const runs=await ctx.researchRuntime.runs(binding.projectId);assert.equal(runs[0].available,false);assert.equal(runs[0].implementationId,'dynamic-fixture')
  await assert.rejects(ctx.researchRuntime.verify(project,'same/001'),/not installed/)
- assert.deepEqual(await artifactIdentity(new URL('../packages/research-runtime/',import.meta.url).pathname),before)
+ assert.deepEqual(await artifactIdentity(fileURLToPath(new URL('../packages/research-runtime/',import.meta.url))),before)
 })
 test('dynamic native client updates retained panels across projects and ignores late prior responses',async()=>{
  const vm=await import('node:vm');let entry,Panel,hookIndex=0,effectIndex=0,pendingRender=false,rendering=false

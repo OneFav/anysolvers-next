@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {Context} from '@deepseek-ai/cordis'
@@ -28,6 +29,6 @@ test('standalone generic package loads in real Loader with no AnySolvers service
  await ctx.loader.remove('runtime');await ctx.loader.await();assert.equal(ctx.researchRuntime,undefined)
 })
 test('build manifests bind the two physical packages independently',async()=>{
- const runtime=await artifactIdentity(new URL('../',import.meta.url).pathname),method=await artifactIdentity(new URL('../../../',import.meta.url).pathname)
+ const runtime=await artifactIdentity(fileURLToPath(new URL('../',import.meta.url))),method=await artifactIdentity(fileURLToPath(new URL('../../../',import.meta.url)))
  assert.equal(runtime.name,'@onefav/research-runtime');assert.equal(method.name,'@onefav/anysolvers');assert.notEqual(runtime.digest,method.digest)
 })
