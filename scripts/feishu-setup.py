@@ -106,7 +106,8 @@ def main():
                 raise ValueError('Unknown chat creation receipt; reconcile before retrying (do not change request ID)')
         else:atomic(receipt,dict(state='creating',attempted_at=time.time(),request_id=args.request_id))
         body=dict(name=args.name,user_id_list=args.user_id,chat_mode='group',chat_type='private',description='AnySolvers deployment acceptance test group')
-        result=adapter.call(['api','POST','/open-apis/im/v1/chats','--params',json.dumps(dict(user_id_type='open_id',uuid=digest([identity['app_id'],args.request_id])[:32])),'--body',json.dumps(body,ensure_ascii=False)])
+        # Raw API is used because +chat-create does not expose the idempotency UUID.
+        result=adapter.call(['api','POST','/open-apis/im/v1/chats','--params',json.dumps(dict(user_id_type='open_id',uuid=digest([identity['app_id'],args.request_id])[:32])),'--data',json.dumps(body,ensure_ascii=False)])
         cid=result.get('chat_id')
         if not cid or not re.fullmatch(r'oc_[A-Za-z0-9_-]+',cid):raise ValueError('Missing chat creation receipt; retain request ID for reconciliation')
         atomic(receipt,dict(chat_id=cid,label=args.name,test_group=True,request_id=args.request_id))
