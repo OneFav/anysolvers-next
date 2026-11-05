@@ -1,0 +1,124 @@
+{
+  "name": "@onefav/anysolvers",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "AnySolvers stage workers, durable Feishu router and recoverable DSH execution",
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": "0.2.1-rc.5"
+  },
+  "exports": {
+    "./study-runtime": "./lib/plugins/study-runtime.js",
+    "./study-sessions": "./lib/plugins/study-sessions.js",
+    "./study-sandbox": "./lib/plugins/study-sandbox.js",
+    "./study-policy": "./lib/plugins/study-policy.js",
+    "./tool-study": "./lib/plugins/tool-study.js",
+    "./tool-solver": "./lib/plugins/tool-solver.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    ".": "./lib/plugins/ui-study.js",
+    "./client": "./lib/client.js",
+    "./tool-final": "./lib/plugins/tool-final.js",
+    "./tool-visualization": "./lib/plugins/tool-visualization.js",
+    "./tool-as-research": "./lib/plugins/tool-as-research.js",
+    "./research-method": "./lib/plugins/research-method.js",
+    "./next-runner": "./lib/plugins/next-runner.js",
+    "./observer-runner": "./lib/plugins/observer-runner.js"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "PLAN.md",
+    "runtime",
+    "scripts/setup-runtime.py",
+    "scripts/install-profile.mjs",
+    "scripts/verify-installed.mjs",
+    "scripts/read-dsh-observations.mjs",
+    "DEPLOYMENT.md",
+    "VALIDATION.md",
+    "controlplane",
+    "config/settings.example.json",
+    "docs"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-api-session-controller"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "npm run build -w @onefav/research-runtime && tsc -p tsconfig.json && node scripts/build-client.mjs && node scripts/build-runtime.mjs && node scripts/build-implementation.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build && npm test",
+    "test:runtime": "node --test packages/research-runtime/tests/*.test.mjs && python3 -B -m unittest discover -s packages/research-runtime/tests -p \"test_*.py\"",
+    "build:method": "tsc -p tsconfig.json && node scripts/build-client.mjs && node scripts/build-runtime.mjs && node scripts/build-implementation.mjs",
+    "test:controlplane": "python3 -B -m unittest discover -s tests/controlplane -v",
+    "test:native": "python3 -B tests/native-smoke.py",
+    "test:observer-native": "python3 -B tests/native-observer-smoke.py",
+    "release:plugin": "npm run build && node scripts/package-plugin.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-agent-preset-registry": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-client-connection": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-commands": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-scope": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-subagent": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-user-approval": "0.2.1-rc.5"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-agent-preset": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-sandbox": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-sandbox-local": "0.2.1-rc.5",
+    "@deepseek-ai/schemastery": "~3.18.5",
+    "@onefav/research-runtime": "1.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis-plugin-loader": "^1.0.2",
+    "@deepseek-ai/dsh-client-connection": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-commands": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-session-persistence": "^0.2.1-rc.5",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "~5.9.3",
+    "yaml": "~2.9.1"
+  },
+  "overrides": {
+    "zod": "4.6.6"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-commands": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-connection": {
+      "optional": true
+    }
+  },
+  "workspaces": [
+    "packages/research-runtime",
+    "examples/dynamic-research"
+  ]
+}

@@ -1,0 +1,245 @@
+{
+  "kind": "actual-model-synthetic-communication-review",
+  "limitations": [
+    "Synthetic reporting inputs, not real research or evaluator runs.",
+    "No integrated live Router tool execution or Feishu test message.",
+    "Rubric checks lexical evidence and action selection; manually reviewed for meaning, not a universal semantic guarantee."
+  ],
+  "initial": {
+    "kind": "actual-model-message-rewrite",
+    "provider": "deepseek-account",
+    "model": "deepseek-flash",
+    "research_executed": false,
+    "tools_available": 0,
+    "external_messages": 0,
+    "stream_calls": 6,
+    "prompt_transport": "native system message, as in Router sessions",
+    "response_contract": "reason (internal) and text (outward), matching Router decision fields; no tool is exposed or executed",
+    "cases": [
+      {
+        "id": "first-method",
+        "input_words": 60,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"首次汇报该方法，实现、改动与结果均已由记录核实，附上尚无消融的限制；符合用户对方法、改动和结果的要求。\",\"text\":\"基线按固定顺序选分支；新方法记录最近访问的分支，选择时避开它，其他规则不变，设计动机是减少立即折返。在相同的24个固定开发案例上，得分从17.2升到21.6。尚未做消融，因此还不能确认提升来自这一改动。\"}",
+            "action": "send",
+            "internal_reason": "首次汇报该方法，实现、改动与结果均已由记录核实，附上尚无消融的限制；符合用户对方法、改动和结果的要求。",
+            "text": "基线按固定顺序选分支；新方法记录最近访问的分支，选择时避开它，其他规则不变，设计动机是减少立即折返。在相同的24个固定开发案例上，得分从17.2升到21.6。尚未做消融，因此还不能确认提升来自这一改动。",
+            "words": 53
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "method-revision",
+        "input_words": 65,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户已了解此前方法，本次只需报告已核对的回退规则改动与同一开发集结果，并保留收益来源未归因的限制。\",\"text\":\"在此前的方法上，这次只把死路处的固定回退改为优先回到最近分叉点；同一24个开发案例得分从21.6升到22.4。尚无消融，收益来源不能归因。\"}",
+            "action": "send",
+            "internal_reason": "用户已了解此前方法，本次只需报告已核对的回退规则改动与同一开发集结果，并保留收益来源未归因的限制。",
+            "text": "在此前的方法上，这次只把死路处的固定回退改为优先回到最近分叉点；同一24个开发案例得分从21.6升到22.4。尚无消融，收益来源不能归因。",
+            "words": 37
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "deterministic-repeat",
+        "input_words": 41,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户问同一方法的重复评测；记录显示实现、案例和配置未变，确定性重跑仍为21.6分，且无新增案例或独立采样，可直接说明没有新证据。\",\"text\":\"实现、24个案例和配置都没变，确定性重跑仍是21.6分；没有新增案例或独立采样，这轮不提供新证据。\"}",
+            "action": "send",
+            "internal_reason": "用户问同一方法的重复评测；记录显示实现、案例和配置未变，确定性重跑仍为21.6分，且无新增案例或独立采样，可直接说明没有新证据。",
+            "text": "实现、24个案例和配置都没变，确定性重跑仍是21.6分；没有新增案例或独立采样，这轮不提供新证据。",
+            "words": 27
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "verified-random-repeats",
+        "input_words": 66,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户询问既有方法在种子变化下的表现；记录包含5个独立种子、相同24个案例的候选与基线均值及范围，足以回答，并需说明仅限这5个种子。\",\"text\":\"方法本身没改（选择分支时随机打破平局）。这次用5个独立随机种子，每个种子跑相同的24个案例：平均分21.4，各种子在19.1到23.0之间；基线用同样的种子和案例，平均17.0，5个种子上候选都高于基线。这5个种子之外还没有结果。\"}",
+            "action": "send",
+            "internal_reason": "用户询问既有方法在种子变化下的表现；记录包含5个独立种子、相同24个案例的候选与基线均值及范围，足以回答，并需说明仅限这5个种子。",
+            "text": "方法本身没改（选择分支时随机打破平局）。这次用5个独立随机种子，每个种子跑相同的24个案例：平均分21.4，各种子在19.1到23.0之间；基线用同样的种子和案例，平均17.0，5个种子上候选都高于基线。这5个种子之外还没有结果。",
+            "words": 62
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "unknown-evaluation-design",
+        "input_words": 59,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"首次汇报，已有实现与同一开发集结果，足以介绍方法与目前结果；不推断未记录的随机性。\",\"text\":\"这个新候选把待访问分支放进循环队列，按进入先后依次访问；基线用栈，优先访问最近加入的分支。在同一组24个开发案例上，候选总分20.8，基线17.2。现有记录未说明随机性或重复设置。\"}",
+            "action": "send",
+            "internal_reason": "首次汇报，已有实现与同一开发集结果，足以介绍方法与目前结果；不推断未记录的随机性。",
+            "text": "这个新候选把待访问分支放进循环队列，按进入先后依次访问；基线用栈，优先访问最近加入的分支。在同一组24个开发案例上，候选总分20.8，基线17.2。现有记录未说明随机性或重复设置。",
+            "words": 49
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "missing-method-evidence",
+        "input_words": 38,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"defer\",\"reason\":\"记录中只有候选名 memory-trail-v9 和总分 20.8，没有实现、改动或机制描述，也没有此前的汇报上下文；按要求不能从名称或分数推断方法，需先补读实现或研究记录后再汇报。\",\"text\":\"\"}",
+            "action": "defer",
+            "internal_reason": "记录中只有候选名 memory-trail-v9 和总分 20.8，没有实现、改动或机制描述，也没有此前的汇报上下文；按要求不能从名称或分数推断方法，需先补读实现或研究记录后再汇报。",
+            "text": "",
+            "words": 0
+          }
+        ],
+        "validation_ok": true
+      }
+    ],
+    "started_at": "2026-11-05T04:06:39.289Z",
+    "prompt_sha256": "ed32dcf4f66ca5bce452af55cbefaa741834242a48c8f9b6453cf884f40df828",
+    "history_sha256": "a98f48684f76f90c59d87b1aff01bbb517a2fc148bc82f2b440928ed25918154",
+    "reasoning_effort": "high",
+    "fixture_kind": "synthetic-research-reporting",
+    "expected_cases": 6,
+    "finished_at": "2026-11-05T04:06:53.812Z"
+  },
+  "final": {
+    "kind": "actual-model-message-rewrite",
+    "provider": "deepseek-account",
+    "model": "deepseek-flash",
+    "research_executed": false,
+    "tools_available": 0,
+    "external_messages": 0,
+    "stream_calls": 7,
+    "prompt_transport": "native system message, as in Router sessions",
+    "response_contract": "reason (internal) and text (outward), matching Router decision fields; no tool is exposed or executed",
+    "cases": [
+      {
+        "id": "first-method",
+        "input_words": 60,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"首次汇报，实现和结果已核实，可简明说明候选机制、与基线差异及同条件得分。\",\"text\":\"有一个：选择分支时记录最近访问过的分支，下次优先避开它，目的是减少立即折返；基线按固定顺序访问，其他规则不变。在相同的24个固定开发案例上，得分从17.2升到21.6。\"}",
+            "action": "send",
+            "internal_reason": "首次汇报，实现和结果已核实，可简明说明候选机制、与基线差异及同条件得分。",
+            "text": "有一个：选择分支时记录最近访问过的分支，下次优先避开它，目的是减少立即折返；基线按固定顺序访问，其他规则不变。在相同的24个固定开发案例上，得分从17.2升到21.6。",
+            "words": 42
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "method-revision",
+        "input_words": 65,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户要求承接已汇报的类似方法，只说明本次改动与新增结果；记录已核对实现差异与同条件分数，可直接汇报。\",\"text\":\"在此前避开最近分支的方法上，这次只把死路处的固定回退改为优先回到最近的分叉点，其余选择规则不变。相同24个开发案例上，得分从21.6升到22.4。\"}",
+            "action": "send",
+            "internal_reason": "用户要求承接已汇报的类似方法，只说明本次改动与新增结果；记录已核对实现差异与同条件分数，可直接汇报。",
+            "text": "在此前避开最近分支的方法上，这次只把死路处的固定回退改为优先回到最近的分叉点，其余选择规则不变。相同24个开发案例上，得分从21.6升到22.4。",
+            "words": 38
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "deterministic-repeat",
+        "input_words": 41,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户询问同一方法再次评测的新信息；记录显示为同条件重跑，复现原分数，且无新增案例或独立采样。\",\"text\":\"这次重跑复现了原结果：同一实现、24个案例和配置均未变，仍得21.6分；没有新增案例或独立随机采样。\"}",
+            "action": "send",
+            "internal_reason": "用户询问同一方法再次评测的新信息；记录显示为同条件重跑，复现原分数，且无新增案例或独立采样。",
+            "text": "这次重跑复现了原结果：同一实现、24个案例和配置均未变，仍得21.6分；没有新增案例或独立随机采样。",
+            "words": 28
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "verified-random-repeats",
+        "input_words": 66,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"已有随机种子重复评测的核实结果，可直接回答表现与范围，并说明结果仅覆盖这5个种子。\",\"text\":\"在5个独立随机种子上，候选平均21.4分（19.1–23.0），基线平均17.0分；候选在5个种子上都更高。这5个种子之外还没有结果。\"}",
+            "action": "send",
+            "internal_reason": "已有随机种子重复评测的核实结果，可直接回答表现与范围，并说明结果仅覆盖这5个种子。",
+            "text": "在5个独立随机种子上，候选平均21.4分（19.1–23.0），基线平均17.0分；候选在5个种子上都更高。这5个种子之外还没有结果。",
+            "words": 34
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "unknown-evaluation-design",
+        "input_words": 59,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"首次对外汇报，需说明候选机制、与基线的区别及已核实的24个开发案例总分。\",\"text\":\"这个候选使用循环队列保存待访问的分支，并按进入队列的先后顺序依次访问；基线使用栈，优先访问最近加入的分支。在同一组24个开发案例上，总分从17.2提升到20.8。\"}",
+            "action": "send",
+            "internal_reason": "首次对外汇报，需说明候选机制、与基线的区别及已核实的24个开发案例总分。",
+            "text": "这个候选使用循环队列保存待访问的分支，并按进入队列的先后顺序依次访问；基线使用栈，优先访问最近加入的分支。在同一组24个开发案例上，总分从17.2提升到20.8。",
+            "words": 42
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "missing-method-evidence",
+        "input_words": 38,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"defer\",\"reason\":\"现有记录只有候选名称和总分，没有实现、改动或机制描述，无法按要求说明候选具体做了什么；也不知道此前是否汇报过，暂不发送。\"}",
+            "action": "defer",
+            "internal_reason": "现有记录只有候选名称和总分，没有实现、改动或机制描述，无法按要求说明候选具体做了什么；也不知道此前是否汇报过，暂不发送。",
+            "text": "",
+            "words": 0
+          }
+        ],
+        "validation_ok": true
+      },
+      {
+        "id": "causal-question",
+        "input_words": 38,
+        "request_context": "synthetic research reporting scenario",
+        "attempts": [
+          {
+            "raw_response": "{\"action\":\"send\",\"reason\":\"用户询问因果归因；记录显示只有开发集分数对比，未测量折返次数且无消融对照，不能支持因果断言。\",\"text\":\"不能。开发集得分从17.2提高到21.6，但尚无折返次数统计或隔离该机制的对照，减少折返目前只是设计动机。\"}",
+            "action": "send",
+            "internal_reason": "用户询问因果归因；记录显示只有开发集分数对比，未测量折返次数且无消融对照，不能支持因果断言。",
+            "text": "不能。开发集得分从17.2提高到21.6，但尚无折返次数统计或隔离该机制的对照，减少折返目前只是设计动机。",
+            "words": 27
+          }
+        ],
+        "validation_ok": true
+      }
+    ],
+    "started_at": "2026-11-05T04:08:14.712Z",
+    "prompt_sha256": "eba1c667e102ea3f1aa8e0059c560a5d3cf12dd8bf425d99d43f9da80139133b",
+    "history_sha256": "a99dcb9f8be3afdecb8c85d0dc645b0e607d337b15eeea03d40d849ed4256e3b",
+    "reasoning_effort": "high",
+    "fixture_kind": "synthetic-research-reporting",
+    "expected_cases": 7,
+    "finished_at": "2026-11-05T04:08:28.865Z"
+  },
+  "manual_review": "Final replies explain new methods and deltas; repeat is described as reproduction; unknown design does not invent uncertainty; missing mechanism defers; causal question retains the necessary limitation.",
+  "rubric_adjustment": "The deterministic-repeat rubric accepts explicit reproduction without requiring the literal word 确定性. This is a review criterion adjustment, not a changed model output."
+}

@@ -1,0 +1,13 @@
+node_modules/
+lib/
+**/lib/
+__pycache__/
+*.pyc
+.venv/
+.state/
+projects/
+versions/
+*.tgz
+.DS_Store
+
+config/settings.json

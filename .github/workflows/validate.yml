@@ -1,0 +1,25 @@
+name: Validate portable source
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  portable:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts
+      - run: python -m pip install -r runtime/requirements.txt
+      - run: npm run check
+      - run: python -B -m unittest discover -s tests/controlplane -p test_agent_deployment.py -v
+      - run: node scripts/package-plugin.mjs

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "path_base": "..",
+  "listen": "127.0.0.1",
+  "port": 8787,
+  "behind_tls_proxy": false,
+  "state_db": ".state/router.sqlite3",
+  "operator_token_env": "AS_NEXT_OPERATOR_TOKEN",
+  "default_host": "development",
+  "default_version": "anysolvers-next-0.7.0",
+  "host_timeout_s": 45,
+  "hosts": {
+    "development": {
+      "token_env": "AS_NEXT_DEVELOPMENT_TOKEN"
+    }
+  },
+  "monitoring": {
+    "consecutive_invalid": 3,
+    "stagnation_window": 8
+  },
+  "observer": {
+    "enabled": false,
+    "state_root": ".state/observer",
+    "batching": {
+      "window_s": 30,
+      "max_wait_s": 120,
+      "max_events": 80,
+      "max_batch_bytes": 48000,
+      "per_batch_events": 20,
+      "read_bytes": 32768,
+      "page_events": 50,
+      "max_session_batches": 12,
+      "max_session_bytes": 240000
+    },
+    "agent": {}
+  },
+  "feishu": {
+    "enabled": false,
+    "cli_command": [
+      "lark-cli"
+    ],
+    "app_id": "",
+    "bot_id": "",
+    "identity_map": {},
+    "allowed_stages": [
+      "initialize",
+      "research",
+      "terminal"
+    ],
+    "chats": [
+      {
+        "chat_id": "",
+        "label": "测试群",
+        "test_group": true,
+        "allowed_users": [],
+        "notify_user": ""
+      }
+    ],
+    "auto_framework_requests": false,
+    "documentation": {
+      "credentials": "Use lark-cli authentication on the Windows laptop; never put app_secret in this file.",
+      "callback_mode": "long-connection",
+      "events": [
+        "im.message.receive_v1"
+      ],
+      "permissions": [
+        "im:message.group_at_msg:readonly",
+        "im:message.group_msg",
+        "im:message:send_as_bot",
+        "im:message:readonly",
+        "im:chat:read",
+        "im:chat.members:read"
+      ],
+      "setup_guide": "docs/FEISHU-WINDOWS.md",
+      "references": [
+        "https://open.feishu.cn/document/server-docs/im-v1/message/events/receive",
+        "https://open.feishu.cn/document/server-docs/im-v1/message/reply",
+        "https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/list"
+      ]
+    },
+    "cli_config_dir": ".state/feishu-cli",
+    "cli_profile": "anysolvers-next"
+  },
+  "worker_host": {
+    "id": "development",
+    "router_url": "http://127.0.0.1:8787",
+    "token_env": "AS_NEXT_DEVELOPMENT_TOKEN",
+    "work_root": "projects",
+    "state_root": ".state/host",
+    "max_workers": 3,
+    "dsh_command": [
+      "dsh",
+      "--profile",
+      "headless"
+    ],
+    "provider": "deepseek-official",
+    "model": "deepseek-flash",
+    "reasoning_effort": "high",
+    "python": "python3",
+    "docker_image": "",
+    "versions": {}
+  },
+  "router_agent": {
+    "router_url": "http://127.0.0.1:8787",
+    "state_root": ".state/router-agent",
+    "provider": "deepseek-official",
+    "model": "deepseek-flash",
+    "reasoning_effort": "high",
+    "dsh_command": [
+      "dsh",
+      "--profile",
+      "headless"
+    ]
+  },
+  "recovery": {
+    "stable_connection_s": 6,
+    "native_heartbeat_timeout_s": 15,
+    "pending_notice_s": 30,
+    "auto_resume": true
+  }
+}

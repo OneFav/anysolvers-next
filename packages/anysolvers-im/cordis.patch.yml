@@ -1,0 +1,3 @@
+- insert:
+    - id: anysolvers-im-ui
+      name: '@onefav/anysolvers-im'

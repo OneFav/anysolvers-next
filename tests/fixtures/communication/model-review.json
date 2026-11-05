@@ -1,0 +1,34 @@
+{
+  "kind": "synthetic-communication-regression",
+  "actual_model_calls": 0,
+  "cases": [
+    {
+      "id": "direct-question",
+      "outward_text": "No experiment is currently running.",
+      "outward_words": 5,
+      "outward_chars": 35,
+      "original_chars": 4840
+    },
+    {
+      "id": "handoff-blocked",
+      "outward_text": "Initialization has not passed validation.",
+      "outward_words": 5,
+      "outward_chars": 41,
+      "original_chars": 4840
+    },
+    {
+      "id": "unresolved-issue",
+      "outward_text": "Please reconcile the outstanding evaluation receipt.",
+      "outward_words": 6,
+      "outward_chars": 52,
+      "original_chars": 4840
+    },
+    {
+      "id": "remote-staging-question",
+      "outward_text": "Please confirm the repaired execution environment.",
+      "outward_words": 6,
+      "outward_chars": 50,
+      "original_chars": 4840
+    }
+  ]
+}

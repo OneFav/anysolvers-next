@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "recovery_proof": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "object", "properties": {"path": {"type": "string"}, "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}, "required": ["path", "sha"], "additionalProperties": false}
+      ]
+    }
+  },
+  "required": ["recovery_proof"],
+  "additionalProperties": false
+}

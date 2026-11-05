@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "testOnly",
+    "snapshotRefs",
+    "updateRationale",
+    "comparisonDataset",
+    "selectedConfiguration",
+    "measurements"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "testOnly": {
+      "const": true
+    },
+    "snapshotRefs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "version",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "comparisonDataset": {
+      "const": "v2"
+    },
+    "updateRationale": {
+      "type": "string"
+    },
+    "selectedConfiguration": {
+      "type": "string"
+    },
+    "measurements": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": [
+          "testOnly",
+          "datasetVersion",
+          "configuration",
+          "fixtureLoss"
+        ],
+        "properties": {
+          "testOnly": {
+            "const": true
+          },
+          "datasetVersion": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "string"
+          },
+          "fixtureLoss": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

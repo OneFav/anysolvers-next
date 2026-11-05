@@ -1,0 +1,50 @@
+# Layer on a DSH 0.2.1-rc.5 base-backed profile. Configuration is explicit.
+# Choose anysolvers-main when creating a coordinator session.
+- insert:
+    - id: research-runtime
+      name: '@onefav/research-runtime/service'
+    - id: research-runtime-ui
+      name: '@onefav/research-runtime/ui'
+    - id: anysolvers-method
+      name: '@onefav/anysolvers/research-method'
+    - id: anysolvers-ui
+      name: '@onefav/anysolvers'
+    - id: anysolvers-runtime
+      name: '@onefav/anysolvers/study-runtime'
+      config:
+        root: !!js process.env.ANYSOLVERS_ROOT || undefined
+        python: !!js process.env.ANYSOLVERS_PYTHON
+    - id: anysolvers-sandbox
+      name: '@onefav/anysolvers/study-sandbox'
+      config:
+        image: !!js process.env.ANYSOLVERS_WORKSPACE_IMAGE
+    - id: anysolvers-sessions
+      name: '@onefav/anysolvers/study-sessions'
+      config:
+        provider: !!js process.env.ANYSOLVERS_PROVIDER
+    - id: anysolvers-policy
+      name: '@onefav/anysolvers/study-policy'
+    - id: preset-anysolvers-main
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: anysolvers-main
+        name: AnySolvers 主会话
+        description: 初始化、研究编排、可信证据和终局交付
+        plugins:
+          - id: anysolvers-research-command
+            name: '@onefav/anysolvers/tool-as-research'
+          - id: anysolvers-main-tools
+            name: '@onefav/anysolvers/tool-study'
+          - id: anysolvers-final-tools
+            name: '@onefav/anysolvers/tool-final'
+          - id: anysolvers-visualization-tools
+            name: '@onefav/anysolvers/tool-visualization'
+    - id: preset-anysolvers-researcher
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: anysolvers-researcher
+        name: AnySolvers 研究员
+        description: 独立会话、私有工作区、受限开发评测
+        plugins:
+          - id: anysolvers-solver-tools
+            name: '@onefav/anysolvers/tool-solver'

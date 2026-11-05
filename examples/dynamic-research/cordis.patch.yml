@@ -1,0 +1,14 @@
+- insert:
+    - id: dynamic-research
+      name: '@onefav/dynamic-research-fixture'
+      config:
+        python: !!js process.env.RESEARCH_FIXTURE_PYTHON
+    - id: preset-dynamic-main
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: dynamic-fixture-main
+        name: 动态评测验收
+        description: 仅用于模拟数据和测试执行器验收
+        plugins:
+          - name: '@onefav/research-runtime/command'
+          - name: '@onefav/dynamic-research-fixture/command'

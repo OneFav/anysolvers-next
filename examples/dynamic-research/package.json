@@ -1,0 +1,11 @@
+{
+ "name":"@onefav/dynamic-research-fixture","version":"0.1.0","type":"module",
+ "description":"Independent dynamic-dataset research acceptance fixture; no real model or candidate execution",
+ "engines":{"node":">=22.19.0","dsh":"0.2.1-rc.5"},
+ "exports":{".":"./lib/plugin.js","./command":"./lib/command.js","./client":"./lib/client.js","./cordis.patch.yml":"./cordis.patch.yml","./package.json":"./package.json"},
+ "files":["lib","python","schemas","cordis.patch.yml","README.md"],
+ "dependencies":{"@onefav/research-runtime":"1.0.0","@deepseek-ai/schemastery":"~3.18.5"},
+ "peerDependencies":{"@deepseek-ai/cordis":"~4.0.5","@deepseek-ai/dsh-agent":"0.2.1-rc.5","@deepseek-ai/dsh-agent-preset":"0.2.1-rc.5","@deepseek-ai/dsh-tools":"0.2.1-rc.5"},
+ "dsh":{"bundle":{"patch":"./cordis.patch.yml"},"client":{"platform":"web","inject":["@deepseek-ai/dsh-client-ui-layout","@deepseek-ai/dsh-client-ui-sidebar","@deepseek-ai/dsh-client-ui-renderer","@deepseek-ai/dsh-client-connection"]}},
+ "scripts":{"build":"tsc -p tsconfig.json && node scripts/build.mjs","test":"node --test ../../tests/dynamic.test.mjs"}
+}
