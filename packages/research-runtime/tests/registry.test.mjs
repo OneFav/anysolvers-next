@@ -22,8 +22,9 @@ test('registration isolates method IDs, presets and routes and unloads only its 
  assert.equal(r.forPreset('second-main').id,'second');remove();assert.throws(()=>r.get('first'),/not installed/);assert.equal(r.get('second').id,'second')
 })
 test('standalone generic package loads in real Loader with no AnySolvers service or tools',async t=>{
+ const stateRoot=await realpath(await mkdtemp(join(tmpdir(),'runtime-registry-')));t.after(()=>rm(stateRoot,{recursive:true,force:true}))
  const baseUrl=new URL('../../../',import.meta.url).href,ctx=new Context().extend({baseUrl}),loader=ctx.plugin(Loader,{baseUrl});await loader;t.after(()=>loader.dispose())
- await ctx.loader.root.update([{id:'runtime',name:'@onefav/research-runtime/service',config:{stateRoot:'/private/tmp/research-runtime-registry-test'}}]);await ctx.loader.await()
+ await ctx.loader.root.update([{id:'runtime',name:'@onefav/research-runtime/service',config:{stateRoot}}]);await ctx.loader.await()
  assert.ok(ctx.researchRuntime);assert.equal(ctx.studies,undefined);assert.equal(ctx.tools,undefined)
  const dispose=ctx.researchRuntime.register(method('example'));assert.equal(ctx.researchRuntime.implementations.list().length,1);dispose();assert.equal(ctx.researchRuntime.implementations.list().length,0)
  await ctx.loader.remove('runtime');await ctx.loader.await();assert.equal(ctx.researchRuntime,undefined)

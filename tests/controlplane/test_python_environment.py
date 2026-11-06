@@ -13,7 +13,7 @@ from controlplane.host import Host
 class PythonEnvironment(unittest.TestCase):
     def test_host_keeps_virtual_environment_identity_and_dependencies(self):
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp);env=root/'venv'
+            root=Path(temp).resolve();env=root/'venv'
             subprocess.run([sys.executable,'-m','venv','--without-pip',str(env)],check=True,capture_output=True)
             python=env/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
             site=subprocess.check_output([str(python),'-c','import sysconfig; print(sysconfig.get_path("purelib"))'],text=True).strip()

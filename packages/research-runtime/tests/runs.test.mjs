@@ -3,8 +3,9 @@ import assert from 'node:assert/strict'
 import {Context} from '@deepseek-ai/cordis'
 import {mkdtemp,mkdir,writeFile,readFile,rm,realpath,symlink} from 'node:fs/promises'
 import {join} from 'node:path'
+import {tmpdir} from 'node:os'
 import {ResearchRuntime,sha,atomic} from '../lib/index.js'
-async function fixture(t){const root=await realpath(await mkdtemp('/private/tmp/as-runs-'));t.after(()=>rm(root,{recursive:true,force:true}));const ctx=new Context(),fiber=ctx.plugin(ResearchRuntime,{stateRoot:join(root,'cache')});await fiber;t.after(()=>fiber.dispose());return {root,runtime:ctx.researchRuntime}}
+async function fixture(t){const root=await realpath(await mkdtemp(join(tmpdir(),'as-runs-')));t.after(()=>rm(root,{recursive:true,force:true}));const ctx=new Context(),fiber=ctx.plugin(ResearchRuntime,{stateRoot:join(root,'cache')});await fiber;t.after(()=>fiber.dispose());return {root,runtime:ctx.researchRuntime}}
 async function method(f,id='fixture'){
  const packageRoot=join(f.root,'package-'+id);await mkdir(join(packageRoot,'lib'),{recursive:true});await writeFile(join(packageRoot,'lib/worker.js'),'// fixture version one\n')
  const value={name:'@fixture/'+id,version:'1',files:{'lib/worker.js':sha(await readFile(join(packageRoot,'lib/worker.js')))}};await atomic(join(packageRoot,'lib/implementation.json'),{schemaVersion:1,...value,digest:sha(JSON.stringify(value))})
