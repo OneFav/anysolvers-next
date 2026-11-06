@@ -11,7 +11,7 @@ root=Path(__file__).resolve().parents[1]
 checks=[]
 # npm scripts must use the same Python environment as this validator.
 environment=dict(os.environ,PATH=str(Path(sys.executable).parent)+os.pathsep+os.environ.get("PATH",""))
-for command in (['npm','run','check'],['npm','run','test:runtime'],[sys.executable,'-B','-m','unittest','discover','-s','tests/controlplane','-v'],[sys.executable,'-B','tests/test-recovery-clock.py','-v'],[sys.executable,'-B','tests/test-e2e-contracts.py','-v'],[sys.executable,'-B','tests/test-remote-evaluation.py'],[sys.executable,'-B','tests/test-evaluation-retention.py'],[sys.executable,'-B','tests/test-budget-handoff.py'],[sys.executable,'-B','tests/native-evaluation.py'],[sys.executable,'-B','tests/native-smoke.py'],[sys.executable,'-B','tests/host-smoke.py']):
+for command in (['npm','run','check'],['npm','run','test:runtime'],[sys.executable,'-B','-m','unittest','discover','-s','tests/controlplane','-v'],[sys.executable,'-B','tests/test-selection-directions.py'],[sys.executable,'-B','tests/test-recovery-clock.py','-v'],[sys.executable,'-B','tests/test-e2e-contracts.py','-v'],[sys.executable,'-B','tests/test-remote-evaluation.py'],[sys.executable,'-B','tests/test-evaluation-retention.py'],[sys.executable,'-B','tests/test-budget-handoff.py'],[sys.executable,'-B','tests/native-evaluation.py'],[sys.executable,'-B','tests/native-smoke.py'],[sys.executable,'-B','tests/host-smoke.py']):
     result=subprocess.run(command,cwd=root,env=environment,capture_output=True,text=True,timeout=600)
     checks.append(dict(command=command,code=result.returncode,tail=(result.stdout+result.stderr)[-6000:]))
     if result.returncode:

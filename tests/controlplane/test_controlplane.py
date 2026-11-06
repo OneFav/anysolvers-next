@@ -294,18 +294,20 @@ r=urllib.request.urlopen(urllib.request.Request(u+'/api/worker/event',b,{'Author
             self.assertEqual(result.returncode,0,result.stderr);self.assertEqual(self.store.get('jobs',job['id'])['state'],'running')
             self.assertTrue(birth(os.getpid()))
 
-    def test_feishu_outbox_retries_same_id_after_transport_failure(self):
+    def test_feishu_outbox_checks_receipt_after_transport_failure(self):
         job=self.job();self.start(job)
         calls=[]
         def run(command,**kwargs):
             calls.append(command)
             if len(calls)==1:raise OSError('lost acknowledgement')
-            return subprocess.CompletedProcess(command,0,stdout='{"code":0,"data":{"message_id":"om_sent"}}')
+            original=calls[0][calls[0].index('--idempotency-key')+1]
+            return subprocess.CompletedProcess(command,0,stdout=json.dumps(dict(code=0,data=dict(items=[dict(uuid=original,message_id='om_sent')]))))
         adapter=Feishu(self.engine,dict(enabled=True,chats=[dict(chat_id='oc_test')]),run)
-        adapter.flush();self.assertEqual(self.store.list('outbox')[0]['state'],'pending')
+        adapter.flush();self.assertEqual(self.store.list('outbox')[0]['state'],'unknown')
         self.now+=600;adapter.flush()
         self.assertEqual(self.store.list('outbox')[0]['state'],'sent')
-        self.assertEqual(calls[0][calls[0].index('--idempotency-key')+1],calls[1][calls[1].index('--idempotency-key')+1])
+        self.assertEqual(sum('--idempotency-key' in c for c in calls),1)
+        self.assertIn('GET',calls[1])
 
     def test_offline_topic_replies_backfilled_before_cursor_commit(self):
         adapter=Feishu(self.engine,dict(chats=[dict(chat_id='oc_test',allowed_users=['ou_owner'])]))

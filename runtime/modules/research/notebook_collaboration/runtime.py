@@ -14,7 +14,8 @@ def records(state):
 
 
 def audit(run, cfg, state):
-    if (not cfg['modules']['selections']['capabilities'].get('researcher_authored') or
+    if (not (cfg['modules']['selections']['capabilities'].get('researcher_authored') or
+             cfg['modules']['selections']['capabilities'].get('coordinator_authored')) or
             not cfg['modules']['evaluation']['capabilities'].get('short_state_transactions')):
         raise ValueError('collaborative research requires compatible researcher-authored selections and session evaluation')
     result = {}
@@ -35,6 +36,21 @@ def audit(run, cfg, state):
         elif key.endswith('-response'):
             raise ValueError('reserved response ID used by a non-response record')
     for session in state['sessions']:
+        if cfg['modules']['selections']['capabilities'].get('round_start_ideas'):
+            start = session.get('starting_idea')
+            if (not start or c.sha(c.contained(run,start['path'])) != start['sha']
+                    or c.digest(start['content']) != start['content_sha']
+                    or start['session_id'] != session['session_id']
+                    or start['actor'] != session['actor'] or start['generation'] != session['generation']):
+                raise ValueError('round starting idea binding changed or missing')
+            snapshot = c.read_json(c.contained(run,start['path']))
+            if snapshot != {k:v for k,v in start.items() if k not in ('path','sha')}:
+                raise ValueError('round starting idea snapshot differs from session binding')
+            source = (next((idea for rec in state['deliveries']['ideas'].values()
+                            for idea in rec['manifest']['ideas'] if idea['idea_id'] == session.get('idea_id')),None)
+                      if session.get('idea_id') else state['deliveries']['iteration'].get(session.get('iteration_id'),{}).get('manifest'))
+            if source != start['content'] or start['idea_id'] != (session.get('idea_id') or session.get('iteration_id')):
+                raise ValueError('round starting idea differs from its sealed source')
         expected = {}
         for key, request in result.items():
             if request['kind'] == 'request' and request['session_id'] == session['session_id']:
@@ -43,6 +59,8 @@ def audit(run, cfg, state):
                                  'finished_at': response['at'] if response else None}
         if session.get('evaluation_waits', {}) != expected:
             raise ValueError('evaluation timing differs from sealed request/response records')
+    if cfg['modules']['selections']['capabilities'].get('method_reports'):
+        invoke(cfg,'selections','report_audit',run,cfg,state)
     return result
 
 
@@ -158,11 +176,28 @@ def begin_session(run, cfg, state, actor, role, idea_id=None, iteration_id=None,
         note = _notebook(all_records, previous[-1]['session_id'])
         if note is None:
             raise ValueError('fresh-context continuation requires a previous notebook')
-        if note['payload']['next_iteration_id'] != iteration_id:
+        if not cfg['modules']['selections']['capabilities'].get('coordinator_authored') and note['payload']['next_iteration_id'] != iteration_id:
             raise ValueError('continuation must use the researcher notebook iteration')
     session = base.begin_session(run, cfg, state, actor, role, idea_id, iteration_id, now)
     session['resume_notebook'] = None if note is None else records(state)[note['record_id']]
     session['context_policy'] = 'fresh-native-session-with-notebook'
+    if cfg['modules']['selections']['capabilities'].get('round_start_ideas'):
+        if idea_id:
+            idea = next(idea for rec in state['deliveries']['ideas'].values()
+                        for idea in rec['manifest']['ideas'] if idea['idea_id'] == idea_id)
+            kind, source_id = 'initial', idea_id
+            idea_text = '\n'.join(idea[k] for k in ('hypothesis','mechanism','first_change','risks'))
+        else:
+            idea = state['deliveries']['iteration'][iteration_id]['manifest']
+            kind, source_id, idea_text = 'selection', iteration_id, idea['idea_text']
+        snapshot = dict(schema_version=1,session_id=session['session_id'],actor=actor,
+                        generation=session['generation'],kind=kind,idea_id=source_id,
+                        idea_text=idea_text,content=idea,content_sha=c.digest(idea))
+        path = c.contained(run,'research/ideas/'+session['session_id']+'.json')
+        if path.exists():
+            raise ValueError('round starting idea already exists; reconciliation required')
+        c.write_json(path,snapshot)
+        session['starting_idea'] = dict(path=str(path.relative_to(run)),sha=c.sha(path),**snapshot)
     c.save_state(run, state)
     c.event(run, 'exchange-session-inputs', session_id=session['session_id'], notebook=session['resume_notebook'])
     return session
@@ -260,6 +295,8 @@ def exchange(run_id, operation, session_id=None, relative=None, request_id=None)
                 if next(s for s in state['sessions'] if s['session_id'] == owner)['actor'] != session['actor']:
                     raise ValueError('notebook candidate must belong to its actor')
             nxt = data['next_iteration_id']
+            if cfg['modules']['selections']['capabilities'].get('coordinator_authored') and nxt is not None:
+                raise ValueError('selection owns next-round ideas; checkpoint next_iteration_id must be null')
             if nxt and (nxt not in state['deliveries']['iteration'] or
                         state['deliveries']['iteration'][nxt]['manifest']['author_session'] != session_id):
                 raise ValueError('next iteration must be authored by this researcher session')

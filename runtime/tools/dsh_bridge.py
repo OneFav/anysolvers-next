@@ -29,6 +29,8 @@ MODULE_SLOTS = {'task', 'datasets', 'ideas', 'research', 'evaluation', 'selectio
 PAYLOADS = {
     'runtime-wait': {'native_id','id','action','reason','supervisor'},
     'stage-validate': {'stage'},
+    'selection-context': {'actor'}, 'selection-submit': {'actor','decision'},
+    'selection-report-context': {'target_session'}, 'selection-report-submit': {'target_session','report'},
     'status': set(), 'config': set(), 'check': set(), 'audit': set(),
     'module': {'slot', 'config'}, 'study-init': {'config'}, 'study-check': set(),
     'study-seal': set(), 'study-deliver': {'kind', 'manifest', 'module'},
@@ -462,7 +464,8 @@ def _research_materials(request):
             start = {'kind': 'idea', 'value': matches[0]}
         else:
             record = state['deliveries']['iteration'][session['iteration_id']]
-            author = _session(state, record['manifest']['author_session'], active=False)
+            author = ({'actor':record['manifest']['actor']} if cfg['modules']['selections']['capabilities'].get('coordinator_authored')
+                      else _session(state, record['manifest']['author_session'], active=False))
             if author['actor'] != session['actor']:
                 raise ValueError('continuation belongs to another researcher')
             start = {'kind': 'iteration', 'value': record['manifest']}
@@ -487,11 +490,13 @@ def _research_materials(request):
                   'recovery_context': recovery_context,
                   'research_plan': {'current_generation': session['generation'],
                                     'rounds_per_researcher': cfg['budgets']['rounds_per_researcher'],
-                                    'next_iteration_required': session['generation'] < cfg['budgets']['rounds_per_researcher'],
+                                    'next_iteration_required': not cfg['modules']['selections']['capabilities'].get('coordinator_authored') and session['generation'] < cfg['budgets']['rounds_per_researcher'],
+                                    'selection_generates_next_idea': bool(cfg['modules']['selections']['capabilities'].get('coordinator_authored')),
+                                    'report_final_checkpoint': bool(cfg['modules']['selections']['capabilities'].get('final_checkpoint_report')),
                                     'active_seconds_per_session': cfg['budgets']['session_wall_s'],
                                     'global_evaluation_limit': cfg['budgets']['evaluation_calls']},
                   'task': task, 'task_description': description, 'development_datasets': datasets,
-                  'starting_point': start, 'notebook': notebook, 'researcher_instructions': instructions,
+                  'starting_idea': session.get('starting_idea'), 'starting_point': start, 'notebook': notebook, 'researcher_instructions': instructions,
                   'schemas': schemas, 'baseline_sources': baselines, 'benchmark_protocols': protocols}
         if len(_json_bytes(result)) > 2 * 1024 * 1024:
             raise ValueError('research materials exceed response limit')
@@ -702,6 +707,18 @@ def command(request):
     run_id = _run_id(request)
     if operation in {'config', 'check'}:
         return _run_command(operation, run_id, **payload)
+    if operation in ('selection-context','selection-submit','selection-report-context','selection-report-submit'):
+        directory = c.run_path(run_id)
+        with c.mutation(directory,wait=True):
+            directory,cfg,state = c.load_run(run_id)
+            invoke(cfg,'research','audit',directory,cfg,state)
+            if operation == 'selection-context':
+                return invoke(cfg,'selections','pending',directory,cfg,state,payload.get('actor'))
+            if operation == 'selection-report-context':
+                return invoke(cfg,'selections','report_context',directory,cfg,state,payload.get('target_session'))
+            if operation == 'selection-report-submit':
+                return invoke(cfg,'selections','report_submit',directory,cfg,state,payload.get('target_session'),payload.get('report'))
+            return invoke(cfg,'selections','submit',directory,cfg,state,payload.get('actor'),payload.get('decision'))
     if operation == 'evidence':
         return _evidence(request, payload)
     if operation == 'audit':

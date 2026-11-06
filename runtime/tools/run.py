@@ -172,6 +172,8 @@ def deliver(run,cfg,state,kind,relative,slot):
 
 
 def select(run,cfg,state,candidate):
+    if cfg['modules']['selections']['capabilities'].get('method_reports'):
+        invoke(cfg,'selections','require_reports',run,cfg,state)
     return invoke(cfg,'final','select',run,cfg,state,candidate)
 
 

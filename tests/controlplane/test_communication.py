@@ -163,6 +163,9 @@ class CommunicationCase(unittest.TestCase):
 
     def test_transport_freezes_wording_before_inflight_issue_arrives(self):
         self.start()
+        with self.store.transaction() as tx:
+            for message in tx.list('outbox'):
+                message['state']='sent';tx.put('outbox',message['id'],message)
         self.event('fault', 'fault', dict(kind='execution_unknown', message='raw failure'))
         incident = self.messages('incident')[0]
         original = incident['text']

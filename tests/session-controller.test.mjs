@@ -42,7 +42,8 @@ async function fixture(t, settings = {}) {
     async call(operation, payload = {}, scope = {}) {
       events.push({ operation, payload: structuredClone(payload), scope: structuredClone(scope) })
       if (settings.beforeCall) await settings.beforeCall(operation, payload, scope)
-      if (operation === 'config') return { budgets: { researchers: 2, rounds_per_researcher: settings.rounds ?? 2 } }
+      if (operation === 'config') return { budgets: { researchers: 2, rounds_per_researcher: settings.rounds ?? 2 }, modules:{selections:{capabilities:{coordinator_authored:settings.coordinatorSelection===true}}} }
+      if(operation==='selection-context')return {pending:[],selected:settings.directions??[]}
       if (operation === 'begin-session') {
         const generation = sessions.filter((item) => item.actor === payload.actor).length + 1
         const session = { session_id: `${payload.actor}-r${String(generation).padStart(3, '0')}`, actor: payload.actor,
@@ -331,4 +332,28 @@ test('journal refuses corrupt, symlinked, or locked controller state', async (t)
   await symlink(join(f.root, 'elsewhere.json'), join(directory, 'controller.json'))
   await assert.rejects(journal.read(runId))
   await assert.rejects(journal.read('../outside'), /Invalid run/)
+})
+
+
+test('selection-generated pivots drive 2x2 independently while a peer is still active (deterministic native doubles)', {timeout:15000}, async t=>{
+ const settings={coordinatorSelection:true,directions:[]}
+ const f=await fixture(t,settings)
+ await f.controller.startRun(f.parent,runId,[{actor:'alice',idea:'a'},{actor:'bob',idea:'b'}])
+ await until(()=>f.children.length===2 && f.children.at(-1).agent.status==='running' && f.sessions.every(s=>s.activated_at))
+ const childFor=actor=>f.children.find(c=>f.sessions.find(s=>s.native_id===c.agent.id)?.actor===actor)
+ f.complete(childFor('alice'))
+ const waiting=await f.controller.waitRun(f.parent,runId)
+ assert.equal(waiting.status,'awaiting_selection');assert.equal(waiting.needs_reconciliation,false)
+ assert.equal(f.sessions.find(s=>s.actor==='bob').status,'active')
+ settings.directions.push({actor:'alice',generation:2,iteration_id:'independent-pivot'})
+ await until(()=>f.children.length===3 && f.children.at(-1).agent.status==='running' && f.sessions.every(s=>s.activated_at))
+ assert.equal(f.sessions.find(s=>s.actor==='bob').status,'active','alice continues before bob ends round one')
+ assert.ok(f.events.some(e=>e.operation==='begin-session'&&e.payload.actor==='alice'&&e.payload.iteration==='independent-pivot'))
+ f.complete(f.children[2]);f.complete(childFor('bob'))
+ settings.directions.push({actor:'bob',generation:2,iteration_id:'different-route'})
+ await until(()=>f.children.length===4 && f.children.at(-1).agent.status==='running' && f.sessions.every(s=>s.activated_at))
+ f.complete(f.children[3])
+ await until(async()=>(await f.controller.journal.read(runId)).plan.status==='completed')
+ assert.equal((await f.controller.waitRun(f.parent,runId)).status,'completed')
+ assert.equal(f.sessions.length,4)
 })

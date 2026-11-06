@@ -1,6 +1,6 @@
 {
   "name": "@onefav/anysolvers",
-  "version": "0.8.0",
+  "version": "0.9.0-dev",
   "private": true,
   "type": "module",
   "description": "AnySolvers stage workers, durable Feishu router and recoverable DSH execution",

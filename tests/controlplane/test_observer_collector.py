@@ -58,6 +58,20 @@ class CollectorCase(unittest.TestCase):
         with patch('controlplane.observer_collector.subprocess.run',side_effect=AssertionError('full reread')):
             self.c.stream(self.job,'study/001',self.file)
 
+    def test_round_idea_and_selection_decision_are_observable_without_final(self):
+        events=[self.event(0,'tool/call',dict(callId='selection',name='study_selection_submit',arguments='{"idea_text":"Change the research route"}')),
+                self.event(1,'tool/result',dict(message=dict(toolCallId='selection',content=[dict(type='text',text='sealed-direction')])))]
+        self.file.write_bytes(compressed([self.header])+compressed(events))
+        start=self.workspace/'runs/study/001/research/ideas/alice-r002.json'
+        start.parent.mkdir(parents=True);start.write_text('{"idea_text":"Change the research route","generation":2}')
+        report=self.workspace/'runs/study/001/research/reports/alice-r002.json'
+        report.parent.mkdir(parents=True);report.write_text('{"method":"Enumerate feasible subsets","score":14}')
+        for _ in range(4):self.c.tick()
+        self.assertTrue(any(r['object']=='study_selection_submit' and r['kind']=='tool_input' for r in self.records))
+        self.assertTrue(any('/ideas/' in r['object'] and 'Change the research route' in r['content'] for r in self.records))
+        self.assertTrue(any('/reports/' in r['object'] and 'Enumerate feasible subsets' in r['content'] for r in self.records))
+        self.assertEqual(self.c.metrics['worker_locks'],0)
+
     def test_upload_crash_replays_stable_ids_and_retains_source_cursor(self):
         self.file.write_bytes(compressed([self.header])+compressed([
             self.event(0,'assistant/message',dict(message=dict(content=[dict(type='text',text='idea A')]))),

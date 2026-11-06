@@ -29,14 +29,14 @@ class FigureDelivery(unittest.TestCase):
   f=Feishu(self.e,{'enabled':True,'chats':[{'chat_id':'oc_test'}]},runner);f.flush();f.flush()
   self.assertEqual(len(calls),1);self.assertEqual(self.store.get('outbox',one['delivery_id'])['state'],'sent')
   self.assertNotIn('content',[m for m in self.e.snapshot()['outbox'] if m.get('media')][0]['media'])
- def test_retry_keeps_delivery_identity(self):
+ def test_unknown_image_checks_original_delivery_receipt(self):
   one=self.queue();ids=[]
   def runner(argv,**kwargs):
-   ids.append(argv[argv.index('--idempotency-key')+1])
-   if len(ids)==1:raise subprocess.TimeoutExpired(argv,45)
-   return subprocess.CompletedProcess(argv,0,stdout='{"code":0,"data":{"message_id":"om_image"}}')
-  f=Feishu(self.e,{'enabled':True,'chats':[{'chat_id':'oc_test'}]},runner);f.flush();self.now+=20;f.flush()
-  self.assertEqual(ids,[one['delivery_id']]*2);self.assertEqual(self.store.get('outbox',one['delivery_id'])['state'],'sent')
+   if '--idempotency-key' in argv:
+    ids.append(argv[argv.index('--idempotency-key')+1]);raise subprocess.TimeoutExpired(argv,45)
+   return subprocess.CompletedProcess(argv,0,stdout=json.dumps(dict(code=0,data=dict(items=[dict(uuid=one['delivery_id'],message_id='om_image')]))))
+  f=Feishu(self.e,{'enabled':True,'chats':[{'chat_id':'oc_test'}]},runner);f.flush();self.now+=60;f.flush()
+  self.assertEqual(ids,[one['delivery_id']]);self.assertEqual(self.store.get('outbox',one['delivery_id'])['state'],'sent')
  def test_wrong_scope_tamper_and_researcher_rejected(self):
   for patch in [{'run_id':'other/001'},{'sha256':'0'*64},{'figure_id':'../secret'},{'content':'not-base64'}]:
    with self.assertRaises(ValueError):self.queue(dict(self.body,**patch))

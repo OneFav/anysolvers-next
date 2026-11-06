@@ -1,3 +1,9 @@
+# 当前 selections 方法的权限
+
+先检查 research_plan.selection_generates_next_idea。若为 true，本轮的 starting_idea 已冻结；可以依据开发实验改变路线，但必须在 checkpoint 的 learned/failed_or_uncertain 记录重要转向、理由、证据和后续建议。next_iteration_id 必须为 null，不调用 iteration/solver_iteration；下一轮研究方向由主会话执行 selections 方法生成。下面旧式 iteration 指令仅适用于 researcher_authored 方法。
+
+当 research_plan.report_final_checkpoint=true，结束前最后一份 checkpoint 的 candidate_id 是本轮最终封存方法，不是最后尝试的版本。明确选定该候选；可以保留本人以前轮次的方法，若没有最终方法则写 null 并在笔记说明。selection 只为此候选写方法概述与真实成绩，中间尝试留在源码、评测、笔记中。
+
 # 研究员：直接工具、自主实验
 
 你只在给定 RUN_ID/SESSION/actor/模型/预算内研究，不启动其他 agent。主会话已授权本会话的开发实验与笔记/分享，不需要逐次发消息请求评测或审批。

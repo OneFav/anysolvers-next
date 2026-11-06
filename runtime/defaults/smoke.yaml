@@ -45,7 +45,7 @@ modules:
   evaluation:
     use: modules/evaluation/queued_sandbox
   selections:
-    use: modules/selections/evidence_iteration
+    use: modules/selections/research_directions
   final:
     use: modules/final/frozen_holdout
   visualization:

@@ -2,6 +2,8 @@
 
 独立的 DSH 研究框架：飞书消息进入持久化 Router，初始化、研究与终局分别在独立 Worker 中执行。研究者只由 research 方法创建；候选与基线只在计账评测器执行。框架维护由用户授权的安装/开发 agent 完成，研究进程没有自主修改框架的能力。
 
+当前 main 为 `0.9.0-dev` 开发快照：默认由研究主会话生成下一轮方向、封存每轮起点与最终方法报告，并提供飞书未知回执核对和断线通知合并。源码同步不代表真实研究或部署验收完成；验证范围见 [部署验收](docs/DEPLOYMENT-ACCEPTANCE.md)。稳定安装仍使用下列 `v0.8.0` / `plugin-v0.8.0`。测试开发快照时固定完整 commit SHA，在独立实例中验证、封存为新版本，不修改已有运行。
+
 ## 安装
 
 把 [INSTALL.md](INSTALL.md) 交给安装 agent。支持任意程序目录、独立实例目录、单机或分布式接入/执行节点。本地安装 Node、Python、DSH 与飞书依赖，无全局安装。模型与飞书认证由原生工具管理。
@@ -25,6 +27,7 @@ npm ci
 npm run check
 npm run test:runtime
 python3 -B -m unittest discover -s tests/controlplane -v
+python3 -B tests/test-selection-directions.py
 ```
 
 真实 DSH 会话、实际模型调用、实际沙箱评测和飞书收发单独验收，不把固定测试当成真实研究。真实飞书测试必须使用指定测试群。

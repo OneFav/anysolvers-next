@@ -107,85 +107,93 @@ class Feishu:
         trigger = normalize(event, self.config)
         return self.engine.receive(trigger) if trigger else None
 
+    def _payload(self, message):
+        """Validate and prepare local bytes before committing a network attempt."""
+        text = message['text']
+        if message.get('communication_version') == 1 and not message.get('media'):
+            from .communication import notification
+            notification(text, message.get('purpose'), message.get('reference'))
+        import re
+        for open_id, label in ([(message['mention'], '负责人')] if message.get('mention') else []) + [(x, '相关人员') for x in message.get('mentions', [])]:
+            if not re.fullmatch(r'ou_[A-Za-z0-9_-]+', open_id):
+                raise ValueError('A Feishu mention requires an open_id')
+            text = '<at user_id="'+open_id+'">'+label+'</at> '+text
+        base = ['im', '+messages-reply', '--message-id', message['channel']['message_id'],
+                '--reply-in-thread', '--idempotency-key', message['id']]
+        if not message.get('media'): return [*base, '--markdown', text], None
+        import base64, hashlib
+        media=message['media']; raw=base64.b64decode(media['content'], validate=True)
+        if media['mime']!='image/png' or hashlib.sha256(raw).hexdigest()!=media['sha256'] or not raw.startswith(b'\x89PNG\r\n\x1a\n'):
+            raise ValueError('Outgoing PNG integrity mismatch')
+        directory=Path(self.engine.store.path).parent/'outgoing-media'; directory.mkdir(exist_ok=True)
+        file=directory/(media['sha256']+'.png')
+        try:
+            with file.open('xb') as stream: stream.write(raw)
+        except FileExistsError:
+            if file.is_symlink() or file.read_bytes()!=raw: raise ValueError('Outgoing media cache changed')
+        return [*base, '--image', file.name], directory
+
     def flush(self):
-        if not self.config.get('enabled'):
-            return
-        for message in self.engine.store.list('outbox'):
-            if message.get('receipt_policy')=='reconcile_unknown' and message['state'] in ('sending','unknown'):
-                if message.get('due_at',0)>self.engine.clock():continue
-                self.reconcile_observer_receipt(message)
-                continue
-            if message['state'] != 'pending' or message['due_at'] > self.engine.clock():
-                continue
-            channel = message['channel']
-            if channel.get('chat_id') not in [c['chat_id'] for c in self.config.get('chats', [])]:
-                continue
-            if message.get('communication_version') == 1:
-                # Freeze the latest wording before delivery. An issue may replace
-                # a generic notice only until this transaction marks the attempt.
-                with self.engine.store.transaction() as tx:
-                    fresh = tx.get('outbox', message['id'])
-                    if fresh['state'] != 'pending': continue
-                    message = fresh
-                    message.setdefault('attempted_at', self.engine.clock())
-                    tx.put('outbox', message['id'], message)
-            text = message['text']
-            if message.get('communication_version') == 1 and not message.get('media'):
-                from .communication import notification
-                try:
-                    notification(text, message.get('purpose'), message.get('reference'))
-                except ValueError as error:
-                    # A malformed new message is not a transport failure. Keep it
-                    # for rewriting without sending, splitting or altering its receipt.
-                    with self.engine.store.transaction() as tx:
-                        message.update(state='needs_rewrite', error=str(error))
-                        tx.put('outbox', message['id'], message)
-                    continue
-            if message.get('mention'):
-                # Open IDs are validated, never interpolate arbitrary HTML from a message.
-                import re
-                if not re.fullmatch(r'ou_[A-Za-z0-9_-]+', message['mention']):
-                    raise ValueError('A Feishu mention requires an open_id')
-                text = '<at user_id="'+message['mention']+'">负责人</at> '+text
-            for open_id in message.get('mentions',[]):
-                import re
-                if not re.fullmatch(r'ou_[A-Za-z0-9_-]+',open_id):raise ValueError('Invalid mapped Feishu identity')
-                text='<at user_id="'+open_id+'">相关人员</at> '+text
-            reliable=message.get('receipt_policy')=='reconcile_unknown'
-            if reliable:
-                # Commit intention before network I/O; a crash cannot look unsent.
+        if not self.config.get('enabled'): return
+        from . import delivery
+        chats = {c['chat_id'] for c in self.config.get('chats', [])}
+        now = self.engine.clock()
+        with self.engine.store.transaction() as tx:
+            delivery.prepare(tx, now, chats)
+            uncertain = delivery.due(tx, now, chats, ('sending', 'unknown'), 2)
+            pending = sorted([m for chat in sorted(chats)
+                for m in delivery.due(tx, now, {chat}, ('pending',), 8)],
+                key=lambda m: (m['created_at'], m['id']))
+        # Bound receipt I/O separately, so an unresolved old receipt cannot block
+        # new human decisions. It can never authorize an automatic retransmission.
+        for message in uncertain:
+            with self.engine.store.transaction() as tx:
+                fresh=tx.get('outbox', message['id'])
+                if fresh['state'] not in ('sending','unknown') or fresh.get('due_at',0)>self.engine.clock(): continue
+                fresh['due_at']=self.engine.clock()+60
+                tx.put('outbox', fresh['id'], fresh)
+            self.reconcile_receipt(fresh)
+        sent_chats=set()
+        interval=max(1, float(self.config.get('min_send_interval_s',30)))
+        for message in pending:
+            chat=message['channel']['chat_id']
+            if chat in sent_chats: continue
+            try:
+                args, directory = self._payload(message)
+            except (OSError, ValueError, KeyError, TypeError):
                 with self.engine.store.transaction() as tx:
                     fresh=tx.get('outbox',message['id'])
-                    if fresh['state']!='pending':continue
-                    message.update(state='sending',attempted_at=self.engine.clock())
-                    tx.put('outbox',message['id'],message)
-            try:
-                base=['im','+messages-reply','--message-id',channel['message_id'],'--reply-in-thread','--idempotency-key',message['id']]
-                if message.get('media'):
-                    import base64,hashlib
-                    media=message['media'];raw=base64.b64decode(media['content'],validate=True)
-                    if media['mime']!='image/png' or hashlib.sha256(raw).hexdigest()!=media['sha256'] or not raw.startswith(b'\x89PNG\r\n\x1a\n'):raise ValueError('Outgoing PNG integrity mismatch')
-                    directory=Path(self.engine.store.path).parent/'outgoing-media';directory.mkdir(exist_ok=True)
-                    file=directory/(media['sha256']+'.png')
-                    if file.exists():
-                        if file.is_symlink() or file.read_bytes()!=raw:raise ValueError('Outgoing media cache changed')
-                    else:
-                        with file.open('xb') as stream:stream.write(raw)
-                    reply=self.call([*base,'--image',file.name],cwd=directory)
-                else:reply=self.call([*base,'--markdown',text])
-                message['delivery_receipt']={k:reply[k] for k in ('message_id','msg_type') if k in reply}
-                if reliable and not message['delivery_receipt'].get('message_id'):
-                    raise ValueError('Missing Feishu delivery receipt')
-                message.update(state='sent', sent_at=self.engine.clock())
-            except (OSError, ValueError, subprocess.SubprocessError):
-                message['attempts'] += 1
-                message['due_at'] = self.engine.clock()+min(300, 5*2**min(message['attempts'],6))
-                message['error'] = 'Feishu delivery failed; stable message ID retained'
-                if reliable:message['state']='unknown'
+                    if fresh == message:
+                        fresh.update(state='needs_rewrite',error='Outgoing message failed local validation; no network attempt.')
+                        tx.put('outbox',fresh['id'],fresh)
+                continue
             with self.engine.store.transaction() as tx:
-                tx.put('outbox', message['id'], message)
+                now=self.engine.clock()
+                delivery.prepare(tx,now,chats)
+                fresh=tx.get('outbox',message['id'])
+                gate=tx.get('delivery_channels',chat) or {}
+                if fresh != message or fresh['state']!='pending' or gate.get('next_send_at',0)>now: continue
+                # All text, images and observer reports use the same durable claim.
+                # The per-chat gate survives crash/restart and multiple consumers.
+                message.update(state='sending',receipt_policy='reconcile_unknown',
+                               attempted_at=now,due_at=now+60,attempts=message.get('attempts',0)+1)
+                tx.put('outbox',message['id'],message)
+                tx.put('delivery_channels',chat,dict(id=chat,next_send_at=now+interval,last_delivery_id=message['id']))
+            sent_chats.add(chat)
+            try:
+                reply=self.call(args,**({'cwd':directory} if directory else {}))
+                receipt={k:reply[k] for k in ('message_id','msg_type') if k in reply}
+                if not receipt.get('message_id'): raise ValueError('Missing Feishu delivery receipt')
+                message.update(state='sent',sent_at=self.engine.clock(),delivery_receipt=receipt)
+                message.pop('error',None)
+            except (OSError,ValueError,subprocess.SubprocessError):
+                message.update(state='unknown',due_at=self.engine.clock()+60,
+                               error='Feishu send outcome unknown; receipt lookup required, no automatic resend.')
+            with self.engine.store.transaction() as tx:
+                current=tx.get('outbox',message['id'])
+                if current['state']!='sent': tx.put('outbox',message['id'],message)
 
-    def reconcile_observer_receipt(self,message):
+    def reconcile_receipt(self,message):
         """Unknown sends are read-checked first. Unprovable absence never resends.
 
         Feishu deployments may expose uuid/idempotency_key on history items. When
@@ -214,6 +222,9 @@ class Feishu:
             current=tx.get('outbox',message['id'])
             if current and current['state']=='sent':return
             tx.put('outbox',message['id'],message)
+
+    # Compatibility for operators using the older observer-specific entry point.
+    reconcile_observer_receipt = reconcile_receipt
 
     def backfill(self):
         """Advance each cursor only after a complete page range is durably ingested."""
@@ -318,8 +329,13 @@ class Feishu:
             for name,action in (('delivery',self.flush),('history',self.backfill)):
                 try:
                     action()
-                    pending=name=='delivery' and any(m['state']=='pending' and m.get('error') for m in self.engine.store.list('outbox'))
-                    self.health(name,'error' if pending else 'ready','发信失败，等待重试' if pending else '检查正常')
+                    uncertain=False
+                    if name=='delivery':
+                        import contextlib
+                        with contextlib.closing(self.engine.store.connect()) as conn:
+                            uncertain=conn.execute("""SELECT 1 FROM records WHERE kind='outbox'
+                              AND json_extract(body,'$.state') IN ('unknown','needs_rewrite') LIMIT 1""").fetchone() is not None
+                    self.health(name,'error' if uncertain else 'ready','消息待核对回执或修正文案；不会盲目重发' if uncertain else '检查正常')
                 except (OSError,ValueError,TypeError,KeyError,subprocess.SubprocessError):
                     self.health(name,'error','飞书调用失败，保留游标与待发消息重试')
             if stop.wait(10):return

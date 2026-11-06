@@ -41,6 +41,14 @@ def command(request):
     if stage == 'research':
         if not state['sessions'] or any(s['status'] != 'completed' for s in state['sessions']):
             raise ValueError('Research requires completed sessions, not an empty or failed run')
+        if cfg['modules']['selections']['capabilities'].get('round_start_ideas'):
+            actors = {s['actor'] for s in state['sessions']}
+            if len(actors) != cfg['budgets']['researchers'] or any(
+                    len([s for s in state['sessions'] if s['actor'] == actor]) != cfg['budgets']['rounds_per_researcher'] for actor in actors):
+                raise ValueError('All configured researcher rounds and starting ideas must complete')
+            invoke(cfg,'research','audit',directory,cfg,state)
+        if cfg['modules']['selections']['capabilities'].get('method_reports'):
+            invoke(cfg,'selections','require_reports',directory,cfg,state)
         from tools.dsh_bridge import _evidence
         evidence = _evidence(request, {'offset': 0, 'limit': 100})
         from dsh.terminal_bridge import eligible

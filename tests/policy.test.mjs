@@ -73,6 +73,9 @@ test('researcher identity cannot be supplied as another run and expiration still
   const item = await setup(t, { researcher: true })
   await assert.rejects(item.ctx.studyPolicy.authorize(item.agent, 'solver_result', { runId: 'other/001' }), /another run/)
   await assert.rejects(item.ctx.studyPolicy.authorize(item.agent, 'final_measure', { runId: 'demo/001' }), /not available/)
+  for (const tool of ['study_selection_report_context','study_selection_report_submit']) {
+    await assert.rejects(item.ctx.studyPolicy.authorize(item.agent, tool, { runId: 'demo/001' }), /not available/)
+  }
   item.setExhausted(true)
   await assert.rejects(item.ctx.studyPolicy.authorize(item.agent, 'solver_evaluate'), /exhausted/)
   await assert.rejects(item.ctx.studyPolicy.authorize(item.agent, 'solver_write'), /exhausted/)

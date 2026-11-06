@@ -115,6 +115,9 @@ def begin_session(run, cfg, state, actor, role, idea_id=None, iteration_id=None,
             raise ValueError('iteration was already consumed by this actor')
         invoke(cfg, 'selections', 'validate_delivery', run, cfg, state,
                record['manifest'], None, cfg['modules']['selections'])
+        if cfg['modules']['selections']['capabilities'].get('coordinator_authored'):
+            if record['manifest']['actor'] != actor or record['manifest']['generation'] != len(previous)+1:
+                raise ValueError('direction belongs to a different actor or round')
         parent = record['manifest']['parent_candidate']
     generation = len(previous) + 1
     session = {

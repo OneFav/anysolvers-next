@@ -32,6 +32,8 @@ def _deliver(run, cfg, state, sid, kind, relative):
     from tools.run import deliver
     # A final hypothesis/iteration is part of closing a session after admission ends.
     if kind == 'iteration':
+        if cfg['modules']['selections']['capabilities'].get('coordinator_authored'):
+            raise ValueError('selection coordinator owns next-round ideas; save suggestions in checkpoint')
         r.active(state, sid)
     else:
         r._admit(cfg, state, sid)

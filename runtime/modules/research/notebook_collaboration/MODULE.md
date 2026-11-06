@@ -1,5 +1,5 @@
 ---
-version: 2.2.0
+version: 3.2.0
 execution:
   mode: main
   delegates:
@@ -62,3 +62,9 @@ files:
 runtime.py 负责会话准入与不可变记录；sessions.py 是共用生命周期校验；client.py 是研究员的固定工具入口。它们都不调用模型，也不含另一套后台 loop。CLI 会话范围校验不等于宿主文件隔离。
 
 首轮中断后的独立维护接续可在新版本、新批次封存 `recovery_proof` 文件引用。证明必须固定原初始化、3 项预算、每名 actor 已消耗的有效时间、原总截止、历史证据和不可重放的失败源码。新批次第一个会话扣除原已耗时间，以后的会话保持原限额；累计轮数不得重置增加。每人只收到自己的固定恢复上下文，原始研究会话与笔记仍保留引用。模型不能生成或改写该证明，也不能将丢失结果补成分数。只有本 research 方法创建新原生研究员。
+
+## research-directions 方法的轮次交接（优先于旧 iteration 续接说明）
+
+当 selections.capabilities.coordinator_authored=true：研究员每轮只写 checkpoint（next_iteration_id=null），记录本轮起点、路线变化、证据与建议。研究主会话按 selections 契约生成下一轮 idea，调用 study_selection_context/study_selection_submit 封存；驱动按 actor 独立等待并消费该决定，不设全局轮次屏障。下一原生会话读取自己的 starting_idea 和上一笔记。research/ideas/<session>.json 保存每轮绑定及正文哈希，observer 可只读采集。候选是否继承父算法与 idea 的演变谱系是两回事。旧 researcher_authored 方法仍按其原契约续接。
+
+当 selections.capabilities.method_reports=true，每轮结束由 selection 主会话读取本轮最后一份checkpoint指定的最终封存候选源码并写 research/reports/<session>.json 方法短报告，附工具核验的开发成绩；包括最后一轮。研究员无须另写此报告，但结束前的checkpoint.candidate_id必须明确本轮最终方法（可保留本人以前轮次的候选），null表示没有封存方法。中间版本不逐项进入报告。

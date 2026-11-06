@@ -9,7 +9,7 @@ import { directoryPath, executablePath, implementationRoot } from './config-path
 import type { JsonObject, Scope } from '../services.js'
 
 export const OPERATIONS = new Set([
-  'runtime-wait', 'stage-validate',
+  'runtime-wait', 'stage-validate', 'selection-context', 'selection-submit', 'selection-report-context', 'selection-report-submit',
   'as-preflight', 'as-start', 'as-configuration', 'as-save', 'as-consent',
   'status', 'config', 'check', 'module', 'study-init', 'study-check', 'study-deliver',
   'study-seal', 'study-plan-resources', 'batch-init', 'begin-session', 'activate-session',

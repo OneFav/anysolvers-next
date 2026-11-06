@@ -14,7 +14,7 @@ import time
 from .config import local_path
 from .processes import atomic
 
-TOOLS = {'batch_init', 'baseline_measure', 'study_module', 'study_status', 'study_config', 'study_evidence',
+TOOLS = {'study_selection_report_context', 'study_selection_report_submit', 'study_selection_context', 'study_selection_submit', 'batch_init', 'baseline_measure', 'study_module', 'study_status', 'study_config', 'study_evidence',
          'study_plan', 'study_audit', 'study_check', 'research_start', 'study_recover', 'session_begin', 'session_end',
          'solver_context', 'solver_read', 'solver_write', 'solver_evaluate', 'solver_result', 'solver_findings',
          'solver_share', 'solver_reuse', 'solver_checkpoint', 'solver_iteration', 'solver_list'}

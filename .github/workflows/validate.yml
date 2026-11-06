@@ -26,5 +26,19 @@ jobs:
         run: npm test
       - if: runner.os == 'Windows'
         run: npm run test:control-portable
-      - run: python -B -m unittest discover -s tests/controlplane -p test_agent_deployment.py -v
+      - if: runner.os != 'Windows'
+        run: npm run test:runtime
+      - if: runner.os != 'Windows'
+        run: python -B -m unittest discover -s tests/controlplane -v
+      - if: runner.os == 'Windows'
+        run: python -B -m unittest discover -s tests/controlplane -p test_agent_deployment.py -v
+      - name: Research and evaluation contracts (no model or remote evaluation)
+        if: runner.os != 'Windows'
+        run: |
+          python -B tests/test-selection-directions.py
+          python -B tests/test-recovery-clock.py
+          python -B tests/test-e2e-contracts.py
+          python -B tests/test-remote-evaluation.py
+          python -B tests/test-evaluation-retention.py
+          python -B tests/test-budget-handoff.py
       - run: node scripts/package-plugin.mjs

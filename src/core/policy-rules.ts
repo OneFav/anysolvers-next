@@ -13,7 +13,7 @@ export const MAIN_TOOLS = [
   'study_status', 'study_config', 'study_plan', 'study_check', 'study_init', 'study_deliver', 'study_plan_resources',
   'study_seal', 'study_audit', 'batch_init', 'session_begin', 'session_end', 'study_recover',
   'research_start', 'baseline_measure', 'study_write', 'study_module',
-  'study_doctor', 'study_evidence', ...FINAL_TOOLS, ...VISUALIZATION_TOOLS,
+  'study_doctor', 'study_evidence', 'study_selection_report_context','study_selection_report_submit','study_selection_context', 'study_selection_submit', ...FINAL_TOOLS, ...VISUALIZATION_TOOLS,
 ] as const
 export const SOLVER_TOOLS = [
   'solver_context', 'solver_evaluate', 'solver_result', 'solver_findings', 'solver_share', 'solver_reuse',
